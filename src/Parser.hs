@@ -6,6 +6,10 @@ import Text.ParserCombinators.Parsec hiding (token, parse)
 import Control.Applicative((<*),(*>))
 import Control.Monad(void, liftM)
 
+keywords = [ "begin"
+           , "end"
+           ]
+
 whitespace :: Parser ()
 whitespace = void $ many $ oneOf "\t\r\n\f "
 
@@ -32,17 +36,15 @@ num = token $ do
     cs <- many1 digit
     return (read cs)
 
-plus, minus, times, divide, modulo :: Parser BinOp
-
-plus = token (char '+') >> return Plus
-minus = token (char '-') >> return Minus
-times = token (char '*') >> return Times
-divide = token (string "/" <|> string "div") >> return Div
-modulo = token (string "mod") >> return Mod
+binOp str op = token (string str) >> return op
 
 addop, mulop :: Parser BinOp
-addop = choice [plus, minus]
-mulop = choice [times, divide, modulo]
+addop = choice $ zipWith binOp
+    ["+",  "-",  "or"]
+    [Plus, Minus, Or]
+mulop = choice $ zipWith binOp
+    ["*",   "/", "div", "mod", "and"]
+    [Times, Div, Div,   Mod,   And]
 
 
 expr, simpleExpr, term, factor :: Parser Expr
@@ -70,8 +72,14 @@ simpleExpr = do
         return (Op op lhs rhs)
       <|> return lhs
 
-statement :: Parser Statement
-statement = do
+statement, simpleStatement, ifStatement, whileStatement :: Parser Statement
+statement = choice $ map try [ simpleStatement
+                             , liftM CompoundStatement compoundStatement
+                             , ifStatement
+                             , whileStatement
+                             ]
+
+simpleStatement = do
     lhs <- ident
     token (string ":=")
     rhs <- expr
@@ -83,6 +91,22 @@ compoundStatement = do
     stmts <- try statement `sepBy` semi
     token (string "end")
     return stmts
+
+ifStatement = do
+    token (string "if")
+    e <- expr
+    token (string "then")
+    ifTrue <- statement
+    ifFalse <- try (liftM Just $ token (string "else") >> statement)
+                <|> return Nothing
+    return (If e ifTrue ifFalse)
+
+whileStatement = do
+    token (string "while")
+    e <- expr
+    token (string "do")
+    stmt <- statement
+    return (While e stmt)
 
 program :: Parser Program
 program = do
@@ -98,7 +122,7 @@ program = do
 declarations :: Parser [([String], Type)] 
 declarations = do
     token (string "var")
-    many1 $ do
+    many1 $ try $ do
         vars <- idlist
         token (char ':')
         t <- ty

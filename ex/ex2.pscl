@@ -1,0 +1,12 @@
+program decisions (input, output);
+var i, j : integer;
+    variable : boolean;
+begin
+   if i > j then
+    i := i + j
+   else if variable then
+    if i <= j then
+     i := 0
+    else
+     j := 0
+end.
