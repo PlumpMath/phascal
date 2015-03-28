@@ -4,15 +4,28 @@ import Ast
 
 import Text.ParserCombinators.Parsec hiding (token, parse)
 import Control.Applicative((<*),(*>))
+import Control.Monad(void, liftM)
+
+whitespace :: Parser ()
+whitespace = void $ many $ oneOf "\t\r\n\f "
 
 token :: Parser a -> Parser a
-token p = p <* spaces
+token p = p <* whitespace
+
+semi :: Parser()
+semi = void $ token (char ';')
+
+parens :: Parser a -> Parser a
+parens p = token (char '(') *> p <* token (char ')')
 
 ident :: Parser String
 ident = token $ do
     c <- letter
     cs <- many (letter <|> digit)
     return (c:cs)
+
+idlist :: Parser [String]
+idlist = ident `sepBy` token (char ',')
 
 num :: Parser Int
 num = token $ do
@@ -36,16 +49,16 @@ expr, simpleExpr, term, factor :: Parser Expr
 
 expr = simpleExpr
 
-factor = choice [ ident >>= (return . Var)
-                , token (char '(') *> simpleExpr <* token (char ')')
-                , num >>= (return . Num)
+factor = choice [ liftM Var ident
+                , parens simpleExpr
+                , liftM Num num
                 ]
 
 term = do
     lhs <- factor
     try $ do
         op <- mulop
-        rhs <- factor 
+        rhs <- term
         return (Op op lhs rhs)
       <|> return lhs 
 
@@ -53,7 +66,7 @@ simpleExpr = do
     lhs <- term
     try $ do
         op <- addop
-        rhs <- term
+        rhs <- simpleExpr
         return (Op op lhs rhs)
       <|> return lhs
 
@@ -64,8 +77,42 @@ statement = do
     rhs <- expr
     return (Assign lhs rhs)
 
-file :: Parser [Statement]
-file = spaces *> statement `sepBy` (token (char ';'))
+compoundStatement :: Parser [Statement]
+compoundStatement = do
+    token (string "begin")
+    stmts <- try statement `sepBy` semi
+    token (string "end")
+    return stmts
 
-parse :: String -> String -> Either ParseError [Statement]
-parse filename input = runParser file () filename input
+program :: Parser Program
+program = do
+    token (string "program")
+    id <- ident
+    args <- option [] (parens idlist)
+    semi
+    decls <- option [] (try declarations)
+    stmts <- compoundStatement
+    token (char '.')
+    return (Program id args decls stmts)
+
+declarations :: Parser [([String], Type)] 
+declarations = do
+    token (string "var")
+    many1 $ do
+        vars <- idlist
+        token (char ':')
+        t <- ty
+        semi
+        return (vars, t)
+
+ty, tyInt, tyBool :: Parser Type
+ty = tyInt <|> tyBool
+
+tyInt  = token (string "integer") >> return TyInt
+tyBool = token (string "boolean") >> return TyBool
+
+file :: Parser [Program]
+file = spaces *> many program
+
+parse :: String -> String -> Either ParseError [Program]
+parse = runParser file ()
