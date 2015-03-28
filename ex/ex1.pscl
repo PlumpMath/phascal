@@ -1,0 +1,7 @@
+program TheSource ;
+ begin
+    a := b3;
+    xyz := a + b mod c + c - p/q;
+    a := xyz * (p + q);
+    p := a - xyz - p
+ end.
