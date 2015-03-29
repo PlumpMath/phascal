@@ -3,12 +3,29 @@ module Parser (parse) where
 import Ast
 
 import Text.ParserCombinators.Parsec hiding (token, parse)
-import Control.Applicative((<*),(*>))
+import Control.Applicative((<*),(*>),empty)
 import Control.Monad(void, liftM)
 
-keywords = [ "begin"
+keywords = [ "and"
+           , "begin"
+           , "div"
+           , "do"
+           , "else"
            , "end"
+           , "false"
+           , "if"
+           , "mod"
+           , "not"
+           , "or"
+           , "program"
+           , "then"
+           , "true"
+           , "var"
+           , "while"
            ]
+
+keyword :: String -> Parser String
+keyword = try . token . string
 
 whitespace :: Parser ()
 whitespace = void $ many $ oneOf "\t\r\n\f "
@@ -16,45 +33,65 @@ whitespace = void $ many $ oneOf "\t\r\n\f "
 token :: Parser a -> Parser a
 token p = p <* whitespace
 
-semi :: Parser()
-semi = void $ token (char ';')
+semi :: Parser ()
+semi = void $ keyword ";"
 
 parens :: Parser a -> Parser a
-parens p = token (char '(') *> p <* token (char ')')
+parens p = keyword "(" *> p <* keyword ")"
 
 ident :: Parser String
-ident = token $ do
+ident = try $ token $ do
     c <- letter
     cs <- many (letter <|> digit)
-    return (c:cs)
+    let id = c:cs
+    if id `elem` keywords then
+        empty
+    else
+        return id
 
 idlist :: Parser [String]
-idlist = ident `sepBy` token (char ',')
+idlist = ident `sepBy` keyword ","
 
 num :: Parser Int
 num = token $ do
     cs <- many1 digit
     return (read cs)
 
-binOp str op = token (string str) >> return op
+sym str val = keyword str >> return val
 
-addop, mulop :: Parser BinOp
-addop = choice $ zipWith binOp
+addop, mulop, relop :: Parser BinOp
+addop = choice $ zipWith sym
     ["+",  "-",  "or"]
     [Plus, Minus, Or]
-mulop = choice $ zipWith binOp
+mulop = choice $ zipWith sym
     ["*",   "/", "div", "mod", "and"]
     [Times, Div, Div,   Mod,   And]
+relop = choice $ zipWith sym
+    ["=", "<>", "<=", ">=",  ">", "<"] -- order is important here; parsec will
+    [Eq,  NEq,   LtEq, GtEq, Gt,  Lt]  -- choose the first match.
 
 
-expr, simpleExpr, term, factor :: Parser Expr
+expr, relExpr, simpleExpr, term, factor :: Parser Expr
 
-expr = simpleExpr
+expr = relExpr
 
 factor = choice [ liftM Var ident
-                , parens simpleExpr
+                , parens expr
                 , liftM Num num
+                , sym "true" T
+                , sym "false" F
+                , liftM Not $ keyword "not" >> factor
+                , liftM Pos $ keyword "+" >> factor
+                , liftM Neg $ keyword "-" >> factor
                 ]
+
+relExpr = do
+    lhs <- simpleExpr
+    try $ do
+        op <- relop
+        rhs <- simpleExpr
+        return (Op op lhs rhs)
+      <|> return lhs
 
 term = do
     lhs <- factor
@@ -62,7 +99,7 @@ term = do
         op <- mulop
         rhs <- term
         return (Op op lhs rhs)
-      <|> return lhs 
+      <|> return lhs
 
 simpleExpr = do
     lhs <- term
@@ -72,59 +109,59 @@ simpleExpr = do
         return (Op op lhs rhs)
       <|> return lhs
 
-statement, simpleStatement, ifStatement, whileStatement :: Parser Statement
-statement = choice $ map try [ simpleStatement
+statement, assignmentStatement, ifStatement, whileStatement :: Parser Statement
+statement = choice $ map try [ assignmentStatement
                              , liftM CompoundStatement compoundStatement
                              , ifStatement
                              , whileStatement
                              ]
 
-simpleStatement = do
+assignmentStatement = do
     lhs <- ident
-    token (string ":=")
+    keyword ":="
     rhs <- expr
     return (Assign lhs rhs)
 
 compoundStatement :: Parser [Statement]
 compoundStatement = do
-    token (string "begin")
+    keyword "begin"
     stmts <- try statement `sepBy` semi
-    token (string "end")
+    keyword "end"
     return stmts
 
 ifStatement = do
-    token (string "if")
+    keyword "if"
     e <- expr
-    token (string "then")
+    keyword "then"
     ifTrue <- statement
-    ifFalse <- try (liftM Just $ token (string "else") >> statement)
+    ifFalse <- try (liftM Just $ keyword "else" >> statement)
                 <|> return Nothing
     return (If e ifTrue ifFalse)
 
 whileStatement = do
-    token (string "while")
+    keyword "while"
     e <- expr
-    token (string "do")
+    keyword "do"
     stmt <- statement
     return (While e stmt)
 
 program :: Parser Program
 program = do
-    token (string "program")
+    keyword "program"
     id <- ident
     args <- option [] (parens idlist)
     semi
     decls <- option [] (try declarations)
     stmts <- compoundStatement
-    token (char '.')
+    keyword "."
     return (Program id args decls stmts)
 
-declarations :: Parser [([String], Type)] 
+declarations :: Parser [([String], Type)]
 declarations = do
-    token (string "var")
+    keyword "var"
     many1 $ try $ do
         vars <- idlist
-        token (char ':')
+        keyword ":"
         t <- ty
         semi
         return (vars, t)
@@ -132,8 +169,8 @@ declarations = do
 ty, tyInt, tyBool :: Parser Type
 ty = tyInt <|> tyBool
 
-tyInt  = token (string "integer") >> return TyInt
-tyBool = token (string "boolean") >> return TyBool
+tyInt  = sym "integer" TyInt
+tyBool = sym "boolean" TyBool
 
 file :: Parser [Program]
 file = spaces *> many program

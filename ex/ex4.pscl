@@ -1,0 +1,6 @@
+program signsAndBools; begin
+  if not true then
+    x := 4 + -2
+  else
+    y := false
+end.

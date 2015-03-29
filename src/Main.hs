@@ -37,6 +37,13 @@ tests = [ ("ex1",
                                   ])
             ]
           ])
+        , ("ex4",
+          [ Program "signsAndBools" [] []
+            [ If (Not T)
+                 (Assign "x" (Op Plus (Num 4) (Neg (Num 2))))
+                 (Just (Assign "y" F))
+            ]
+          ])
         ]
 
 type TestFailure = Either ParseError ([Program], [Program])
