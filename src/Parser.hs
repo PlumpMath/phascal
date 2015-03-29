@@ -99,8 +99,8 @@ relExpr = do
         return (op lhs rhs)
       <|> return lhs
 
-term       = factor `chainr1` mulop
-simpleExpr = term `chainr1` addop
+term       = factor `chainl1` mulop
+simpleExpr = term `chainl1` addop
 
 statement, assignmentStatement, ifStatement, whileStatement :: Parser Statement
 statement = choice $ map try [ assignmentStatement

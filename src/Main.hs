@@ -5,12 +5,14 @@ import Text.ParserCombinators.Parsec (ParseError)
 tests = [ ("ex1",
           [ Program "TheSource" [] []
               [ Assign "a" (Var "b3")
-              , Assign "xyz" (Op Plus (Var "a")
-                                 (Op Plus (Op Mod (Var "b") (Var "c"))
-                                          (Op Minus (Var "c") (Op Div (Var "p")
-                                                                      (Var "q")))))
+              , Assign "xyz" (Op Minus (Op Plus (Op Plus (Var "a")
+                                                         (Op Mod (Var "b")
+                                                                 (Var "c")))
+                                                (Var "c"))
+                                       (Op Div (Var "p")
+                                               (Var "q")))
               , Assign "a" (Op Times (Var "xyz") (Op Plus (Var "p") (Var "q")))
-              , Assign "p" (Op Minus (Var "a") (Op Minus (Var "xyz") (Var "p")))
+              , Assign "p" (Op Minus (Op Minus (Var "a") (Var "xyz")) (Var "p"))
               ]
           ])
         , ("ex2",
