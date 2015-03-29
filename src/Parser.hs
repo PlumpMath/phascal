@@ -57,16 +57,22 @@ num = token $ do
     cs <- many1 digit
     return (read cs)
 
+sym :: String -> a -> Parser a
 sym str val = keyword str >> return val
 
-addop, mulop, relop :: Parser BinOp
-addop = choice $ zipWith sym
+binOp :: String -> BinOp -> Parser (Expr -> Expr -> Expr)
+binOp str val = do
+    op <- sym str val
+    return (Op op)
+
+addop, mulop, relop :: Parser (Expr -> Expr -> Expr)
+addop = choice $ zipWith binOp
     ["+",  "-",  "or"]
     [Plus, Minus, Or]
-mulop = choice $ zipWith sym
+mulop = choice $ zipWith binOp
     ["*",   "/", "div", "mod", "and"]
     [Times, Div, Div,   Mod,   And]
-relop = choice $ zipWith sym
+relop = choice $ zipWith binOp
     ["=", "<>", "<=", ">=",  ">", "<"] -- order is important here; parsec will
     [Eq,  NEq,   LtEq, GtEq, Gt,  Lt]  -- choose the first match.
 
@@ -90,24 +96,11 @@ relExpr = do
     try $ do
         op <- relop
         rhs <- simpleExpr
-        return (Op op lhs rhs)
+        return (op lhs rhs)
       <|> return lhs
 
-term = do
-    lhs <- factor
-    try $ do
-        op <- mulop
-        rhs <- term
-        return (Op op lhs rhs)
-      <|> return lhs
-
-simpleExpr = do
-    lhs <- term
-    try $ do
-        op <- addop
-        rhs <- simpleExpr
-        return (Op op lhs rhs)
-      <|> return lhs
+term       = factor `chainr1` mulop
+simpleExpr = term `chainr1` addop
 
 statement, assignmentStatement, ifStatement, whileStatement :: Parser Statement
 statement = choice $ map try [ assignmentStatement
