@@ -1,5 +1,6 @@
 import Parser (parse)
 import System.Environment
+import Control.Monad (join)
 
 import Arm
 
@@ -10,6 +11,11 @@ main = do
         ["ast"] -> interact (show . parse "<stdin>")
         ["asm"] -> do
             contents <- getContents
-            print $ case parse "<stdin>" contents of
-                Left e -> Left e
-                Right progs -> Right $ sequence (map compileProgram progs) 
+            let result = case parse "<stdin>" contents of
+                            Left e -> Left e
+                            Right progs -> Right $ sequence (map compileProgram progs)
+            case result of
+                Right (Right asm) -> mapM_ (putStr . formatDirective) (join asm)
+                -- TODO: we should send this to stdout and exit non-zero:
+                Right (Left e) -> putStrLn ("error: " ++ (show e))
+                Left e -> putStrLn ("error: " ++ (show e))

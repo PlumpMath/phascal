@@ -31,24 +31,36 @@ type Reg = String
 
 data Instr = Ldr Reg Address
            | Str Reg Address
-data Address = RegOffset Reg Int
+           deriving(Show)
+data Address = RegOffset Reg Int deriving(Show)
 
-instance Show Address where
-    show (RegOffset reg off) = "[" ++ reg ++ ",#" ++ (show off) ++ "]"
+data Directive = Instruction Instr
+               | Label String
+               deriving(Show)
 
-instance Show Instr where
-    show (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ (show addr)
-    show (Str reg addr) = "str " ++ reg ++ ", " ++ (show addr)
 
-compileExpr :: SymTable -> Expr -> Either CompileError [Instr]
-compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Ldr "r0" addr]
+formatInstr :: Instr -> String
+formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ (formatAddr addr)
+formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ (formatAddr addr)
 
-compileStatement :: SymTable -> Statement -> Either CompileError [Instr]
+formatAddr :: Address -> String
+formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ (show off) ++ "]"
+
+formatDirective :: Directive -> String
+formatDirective (Instruction instr) = "\t" ++ (formatInstr instr) ++ "\n"
+formatDirective (Label lbl) = lbl ++ ":\n"
+
+compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
+compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr "r0" addr]
+
+compileStatement :: SymTable -> Statement -> Either CompileError [Directive]
 compileStatement syms (Assign v ex) = do
     addr <- varAddr syms v
     liftM2 (++) (compileExpr syms ex)
-                (return [Str "r0" addr])
+                (return [Instruction $ Str "r0" addr])
 
-compileProgram :: Program -> Either CompileError [Instr]
-compileProgram p = (sequence $ map (compileStatement syms) (body p)) >>= return . join
+compileProgram :: Program -> Either CompileError [Directive]
+compileProgram p = do
+    body' <- sequence $ map (compileStatement syms) (body p)
+    return $ (Label $ name p):(join body')
   where syms = makeSymTable p
