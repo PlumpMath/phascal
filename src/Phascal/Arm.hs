@@ -28,8 +28,13 @@ data Directive = Instruction Instr
                deriving(Show)
 
 
--- | (canImmediate n) indicates whether the number n is representable as
+-- | @canImmediate n@ indicates whether the number @n@ is representable as
 -- an arm assembly immediate.
+--
+-- Arm uses an 8 bit immediate with a 4 bit rotate field (where the rotation is
+-- in units of 2 bits). There's a good description of the whole thing here:
+--
+-- <http://alisdair.mcdiarmid.org/2014/01/12/arm-immediate-value-encoding.html>
 canImmediate :: Int -> Bool
 canImmediate n = any (\rot -> n' `rotate` rot < 256) [0,2..30]
   where n' = fromIntegral n :: Word32
