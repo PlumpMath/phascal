@@ -3,6 +3,8 @@ module Arm where
 import qualified Data.Map.Strict as M
 import Control.Monad (liftM, liftM2, join)
 import Ast
+import Data.Bits
+import Data.Word
 
 data SymInfo = SymInfo { frameOffset :: Int
                        , ty          :: Type
@@ -37,6 +39,13 @@ data Address = RegOffset Reg Int deriving(Show)
 data Directive = Instruction Instr
                | Label String
                deriving(Show)
+
+
+-- | (canImmediate n) indicates whether the number n is representable as
+-- an arm assembly immediate.
+canImmediate :: Int -> Bool
+canImmediate n = or $ map (\rot -> n' `rotate` rot < 256) [0,2..30]
+  where n' = fromIntegral n :: Word32
 
 
 formatInstr :: Instr -> String

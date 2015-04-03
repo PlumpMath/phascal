@@ -1,4 +1,4 @@
-module ParserTests (hunitTests) where
+module ParserTests (parserTests) where
 
 import Test.HUnit
 import Parser
@@ -97,5 +97,5 @@ assertAst text ast = case (parse "test-input" text) of
     Left e -> putStrLn ("parse error: " ++ (show e))
     Right ast' -> assertEqual "Ast was not as expected" ast' ast
 
-hunitTests = TestList $ map (\(name,text,ast) ->
+parserTests = TestList $ map (\(name,text,ast) ->
     TestLabel name (TestCase (assertAst text ast))) tests
