@@ -44,19 +44,19 @@ data Directive = Instruction Instr
 -- | (canImmediate n) indicates whether the number n is representable as
 -- an arm assembly immediate.
 canImmediate :: Int -> Bool
-canImmediate n = or $ map (\rot -> n' `rotate` rot < 256) [0,2..30]
+canImmediate n = any (\rot -> n' `rotate` rot < 256) [0,2..30]
   where n' = fromIntegral n :: Word32
 
 
 formatInstr :: Instr -> String
-formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ (formatAddr addr)
-formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ (formatAddr addr)
+formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
+formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 
 formatAddr :: Address -> String
-formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ (show off) ++ "]"
+formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
 
 formatDirective :: Directive -> String
-formatDirective (Instruction instr) = "\t" ++ (formatInstr instr) ++ "\n"
+formatDirective (Instruction instr) = "\t" ++ formatInstr instr ++ "\n"
 formatDirective (Label lbl) = lbl ++ ":\n"
 
 compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
@@ -70,6 +70,6 @@ compileStatement syms (Assign v ex) = do
 
 compileProgram :: Program -> Either CompileError [Directive]
 compileProgram p = do
-    body' <- sequence $ map (compileStatement syms) (body p)
-    return $ (Label $ name p):(join body')
+    body' <- mapM (compileStatement syms) (body p)
+    return $ (Label $ name p) : join body'
   where syms = makeSymTable p

@@ -93,8 +93,8 @@ tests = [ ("TheSource",
         ]
 
 assertAst :: String -> [Program] -> Assertion
-assertAst text ast = case (parse "test-input" text) of
-    Left e -> putStrLn ("parse error: " ++ (show e))
+assertAst text ast = case parse "test-input" text of
+    Left e -> putStrLn ("parse error: " ++ show e)
     Right ast' -> assertEqual "Ast was not as expected" ast' ast
 
 parserTests = TestList $ map (\(name,text,ast) ->

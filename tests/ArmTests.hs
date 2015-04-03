@@ -13,7 +13,7 @@ yes = [ 0x000000ff
       , 0x0003fc00
       , 0xc0000034
         -- any power of two:
-      ] ++ (map (shiftL 1)) [0..31]
+      ] ++ map (shiftL 1) [0..31]
 
 no = [ 0x00000102
      , 0xff0000ff
