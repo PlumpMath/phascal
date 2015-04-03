@@ -1,8 +1,10 @@
-import Parser (parse)
+module Phascal.Main where
+
 import System.Environment
 import Control.Monad (join)
 
-import Arm
+import Phascal.Parser (parse)
+import Phascal.Arm
 
 main :: IO ()
 main = do

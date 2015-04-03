@@ -1,6 +1,6 @@
-module Parser (parse) where
+module Phascal.Parser (parse) where
 
-import Ast
+import Phascal.Ast
 
 import Text.ParserCombinators.Parsec hiding (token, parse)
 import Control.Applicative((<*),(*>),empty)

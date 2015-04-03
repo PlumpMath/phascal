@@ -1,8 +1,8 @@
 module ParserTests (parserTests) where
 
 import Test.HUnit
-import Parser
-import Ast
+import Phascal.Parser
+import Phascal.Ast
 
 tests = [ ("TheSource",
            unlines [

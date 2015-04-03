@@ -1,12 +1,12 @@
-module Arm where
+module Phascal.Arm where
 
 import Control.Monad (liftM, liftM2, join)
 import Data.Bits
 import Data.Word
 import Prelude hiding (lookup)
 
-import Ast
-import SymbolTable
+import Phascal.Ast
+import Phascal.SymbolTable
 
 data CompileError = UndefinedVar String
                   deriving(Show)

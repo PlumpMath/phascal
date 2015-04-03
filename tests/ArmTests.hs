@@ -2,7 +2,7 @@ module ArmTests (armTests) where
 
 import Test.HUnit
 import Data.Bits
-import Arm
+import Phascal.Arm
 
         -- bytes in any position:
 yes = [ 0x000000ff

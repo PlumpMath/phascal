@@ -1,4 +1,4 @@
-module Ast where
+module Phascal.Ast where
 
 data Program = Program { name  :: String
                        , args  :: [String]

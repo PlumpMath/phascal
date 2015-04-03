@@ -1,8 +1,8 @@
-module SymbolTable where
+module Phascal.SymbolTable where
 
 import qualified Data.Map.Strict as M
 
-import Ast
+import Phascal.Ast
 
 data SymInfo = SymInfo { frameOffset :: Int
                        , ty          :: Type
