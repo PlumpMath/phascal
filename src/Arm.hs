@@ -1,31 +1,18 @@
 module Arm where
 
-import qualified Data.Map.Strict as M
 import Control.Monad (liftM, liftM2, join)
-import Ast
 import Data.Bits
 import Data.Word
+import Prelude hiding (lookup)
 
-data SymInfo = SymInfo { frameOffset :: Int
-                       , ty          :: Type
-                       } 
+import Ast
+import SymbolTable
 
 data CompileError = UndefinedVar String
                   deriving(Show)
 
-type SymTable = M.Map String SymInfo
-
--- TODO: We should check for duplicate entries.
-makeSymTable :: Program -> SymTable
-makeSymTable prog = foldl M.union M.empty (map makeOneType (decls prog))
-
-makeOneType :: ([String], Type) -> SymTable
-makeOneType (vs, ty) = M.fromList $ zip
-    vs
-    (zipWith SymInfo [0..] (repeat ty))
-
 varAddr :: SymTable -> String -> Either CompileError Address
-varAddr syms v = case M.lookup v syms of
+varAddr syms v = case lookup v syms of
     Nothing -> Left (UndefinedVar v)
     Just (SymInfo offset _) -> Right (RegOffset "fp" offset)
 
