@@ -22,6 +22,7 @@ type Reg = String
 data Instr = Ldr Reg Address
            | Str Reg Address
            | Push [Reg]
+           | Pop [Reg]
            deriving(Show)
 data Address = RegOffset Reg Int deriving(Show)
 
@@ -46,6 +47,7 @@ formatInstr :: Instr -> String
 formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
+formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
