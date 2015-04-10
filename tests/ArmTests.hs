@@ -20,11 +20,21 @@ no = [ 0x00000102
      , 0x00100001
      ]
 
+instrTests = [ (Push ["r0", "r5", "lr"], "push {r0,r5,lr}")
+             ]
+
 armTests = TestList $
-    [TestLabel (show num) (testCase num True)  | num <- yes] ++
-    [TestLabel (show num) (testCase num False) | num <- no]
+    [TestLabel (show num)   (immediateTestCase num True)  | num <- yes] ++
+    [TestLabel (show num)   (immediateTestCase num False) | num <- no]  ++
+    [TestLabel (show instr) (formatInstrTestCase instr output)
+             | (instr, output) <- instrTests]
   where
-    testCase num expected =
+    immediateTestCase num expected =
         TestCase $ assertEqual
                     ("expected " ++ show expected ++ " for " ++ show num)
                     (canImmediate num) expected
+    formatInstrTestCase instr output =
+        TestCase $ assertEqual
+                    ("expected " ++ show output ++ " for " ++ show instr)
+                    output
+                    (formatInstr instr)

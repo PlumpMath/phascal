@@ -4,6 +4,7 @@ import Control.Monad (liftM, liftM2, join)
 import Data.Bits
 import Data.Word
 import Prelude hiding (lookup)
+import Data.List (intersperse)
 
 import Phascal.Ast
 import Phascal.SymbolTable
@@ -20,6 +21,7 @@ type Reg = String
 
 data Instr = Ldr Reg Address
            | Str Reg Address
+           | Push [Reg]
            deriving(Show)
 data Address = RegOffset Reg Int deriving(Show)
 
@@ -43,6 +45,7 @@ canImmediate n = any (\rot -> n' `rotate` rot < 256) [0,2..30]
 formatInstr :: Instr -> String
 formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
+formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
