@@ -23,6 +23,7 @@ data Instr = Ldr Reg Address
            | Str Reg Address
            | Push [Reg]
            | Pop [Reg]
+           | Add Reg Reg Reg
            deriving(Show)
 data Address = RegOffset Reg Int deriving(Show)
 
@@ -48,6 +49,7 @@ formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
+formatInstr (Add ret lhs rhs) = "add " ++ (join $ intersperse ", " [ret, lhs, rhs])
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
@@ -58,6 +60,17 @@ formatDirective (Label lbl) = lbl ++ ":\n"
 
 compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
 compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr "r0" addr]
+compileExpr syms (Op op lhs rhs) = do
+    [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
+    opAsm <- compileBinOp op
+    return $ lAsm ++ rAsm ++ [Instruction $ Pop ["r0", "r1"]] ++ opAsm
+  where
+    compileSubExpr ex = do
+        sub <- compileExpr syms ex
+        return $ sub ++ [Instruction $ Push ["r0"]]
+
+compileBinOp :: BinOp -> Either CompileError [Directive]
+compileBinOp Plus = Right $ [Instruction $ Add "r0" "r0" "r1"]
 
 compileStatement :: SymTable -> Statement -> Either CompileError [Directive]
 compileStatement syms (Assign v ex) = do
