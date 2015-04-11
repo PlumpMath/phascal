@@ -10,7 +10,7 @@ import Phascal.Ast
 import Phascal.SymbolTable
 
 data CompileError = UndefinedVar String
-                  deriving(Show)
+                  deriving(Show, Eq)
 
 varAddr :: SymTable -> String -> Either CompileError Address
 varAddr syms v = case lookup v syms of
@@ -24,12 +24,12 @@ data Instr = Ldr Reg Address
            | Push [Reg]
            | Pop [Reg]
            | Add Reg Reg Reg
-           deriving(Show)
-data Address = RegOffset Reg Int deriving(Show)
+           deriving(Show, Eq)
+data Address = RegOffset Reg Int deriving(Show, Eq)
 
 data Directive = Instruction Instr
                | Label String
-               deriving(Show)
+               deriving(Show, Eq)
 
 
 -- | @canImmediate n@ indicates whether the number @n@ is representable as

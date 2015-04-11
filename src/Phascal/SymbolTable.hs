@@ -2,7 +2,9 @@ module Phascal.SymbolTable (
     SymInfo(..),
     SymTable,
     makeSymTable,
-    lookup
+    lookup,
+    fromList,
+    empty
 ) where
 
 import Prelude hiding (lookup)
@@ -12,7 +14,7 @@ import Phascal.Ast
 
 data SymInfo = SymInfo { frameOffset :: Int
                        , ty          :: Type
-                       } 
+                       } deriving(Show)
 
 newtype SymTable = SymTable (M.Map String SymInfo)
 
@@ -35,3 +37,13 @@ makeSymTable prog = SymTable $ foldl M.union M.empty
 
 lookup :: String -> SymTable -> Maybe SymInfo
 lookup key (SymTable syms) = M.lookup key syms
+
+fromList :: [(String, SymInfo)] -> SymTable
+fromList = SymTable . M.fromList
+
+empty :: SymTable
+empty = SymTable M.empty
+
+
+instance (Show SymTable) where
+    show (SymTable m) = "SymTable " ++ (show $ M.toList m)

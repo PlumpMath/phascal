@@ -3,6 +3,8 @@ module ArmTests (armTests) where
 import Test.HUnit
 import Data.Bits
 import Phascal.Arm
+import Phascal.Ast
+import qualified Phascal.SymbolTable as S
 
         -- bytes in any position:
 yes = [ 0x000000ff
@@ -27,11 +29,28 @@ instrTests = [ (Push ["r0", "r5", "lr"], "push {r0,r5,lr}")
              , (Add "r0" "r0" "r1",     "add r0, r0, r1")
              ]
 
+
+exprTests = [ ( Op Plus (Var "x") (Var "y")
+              , S.fromList [ ("x", S.SymInfo 1 TyInt)
+                           , ("y", S.SymInfo 2 TyInt)
+                           ]
+              , Right [ Instruction (Ldr "r0" (RegOffset "fp" 1))
+                      , Instruction (Push ["r0"])
+                      , Instruction (Ldr "r0" (RegOffset "fp" 2))
+                      , Instruction (Push ["r0"])
+                      , Instruction (Pop ["r0", "r1"])
+                      , Instruction (Add "r0" "r0" "r1")
+                      ]
+              )
+            ]
+
 armTests = TestList $
     [TestLabel (show num)   (immediateTestCase num True)  | num <- yes] ++
     [TestLabel (show num)   (immediateTestCase num False) | num <- no]  ++
     [TestLabel (show instr) (formatInstrTestCase instr output)
-             | (instr, output) <- instrTests]
+             | (instr, output) <- instrTests] ++
+    [TestLabel (show (expr, syms)) (exprTestCase expr syms output)
+             | (expr, syms, output) <- exprTests]
   where
     immediateTestCase num expected =
         TestCase $ assertEqual
@@ -42,3 +61,8 @@ armTests = TestList $
                     ("expected " ++ show output ++ " for " ++ show instr)
                     output
                     (formatInstr instr)
+    exprTestCase expr syms output =
+        TestCase $ assertEqual
+                    ("expected " ++ show output ++ " for " ++ show expr)
+                    output
+                    (compileExpr syms expr)
