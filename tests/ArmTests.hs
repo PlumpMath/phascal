@@ -30,7 +30,11 @@ instrTests = [ (Push ["r0", "r5", "lr"], "push {r0,r5,lr}")
              ]
 
 
-exprTests = [ ( Op Plus (Var "x") (Var "y")
+exprTests = [ (Var "x"
+              , S.fromList [("x", S.SymInfo 1 TyInt)]
+              , Right [Instruction (Ldr "r0" (RegOffset "fp" 1))]
+              )
+            , ( Op Plus (Var "x") (Var "y")
               , S.fromList [ ("x", S.SymInfo 1 TyInt)
                            , ("y", S.SymInfo 2 TyInt)
                            ]
