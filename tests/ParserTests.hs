@@ -3,6 +3,7 @@ module ParserTests (parserTests) where
 import Test.HUnit
 import Phascal.Parser
 import Phascal.Ast
+import Phascal.Types
 
 tests = [ ("TheSource",
            unlines [

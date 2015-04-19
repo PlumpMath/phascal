@@ -11,6 +11,7 @@ import Prelude hiding (lookup)
 import qualified Data.Map.Strict as M
 
 import Phascal.Ast
+import Phascal.Types
 
 data SymInfo = SymInfo { frameOffset :: Int
                        , ty          :: Type

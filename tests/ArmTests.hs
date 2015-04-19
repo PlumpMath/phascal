@@ -4,6 +4,7 @@ import Test.HUnit
 import Data.Bits
 import Phascal.Arm
 import Phascal.Ast
+import Phascal.Types
 import qualified Phascal.SymbolTable as S
 
         -- bytes in any position:

@@ -1,5 +1,7 @@
 module Phascal.Ast where
 
+import Phascal.Types
+
 -- | An ast for a pascal program
 data Program = Program { name  :: String
                          -- ^ The name of the program
@@ -10,8 +12,6 @@ data Program = Program { name  :: String
                        , body  :: [Statement]
                          -- ^ Body of the program
                        } deriving(Show, Eq)
-
-data Type = TyInt | TyBool deriving(Show, Eq)
 
 -- | A pascal statement
 data Statement = Assign String Expr
