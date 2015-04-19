@@ -1,4 +1,4 @@
-module Phascal.Main where
+module Main where
 
 import System.Environment
 import Control.Monad (join)
