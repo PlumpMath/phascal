@@ -47,4 +47,4 @@ empty = SymTable M.empty
 
 
 instance (Show SymTable) where
-    show (SymTable m) = "SymTable " ++ (show $ M.toList m)
+    show (SymTable m) = "SymTable " ++ show (M.toList m)

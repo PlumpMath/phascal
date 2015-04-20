@@ -53,7 +53,7 @@ formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
-formatInstr (Add ret lhs rhs) = "add " ++ (join $ intersperse ", " [ret, lhs, rhs])
+formatInstr (Add ret lhs rhs) = "add " ++ join (intersperse ", " [ret, lhs, rhs])
 formatInstr (Svc n) = "svc #" ++ show n
 formatInstr (Mov reg val) = "mov " ++ reg ++ ", #" ++ show val
 
@@ -77,7 +77,7 @@ compileExpr syms (Op op lhs rhs) = do
         return $ sub ++ [Instruction $ Push ["r0"]]
 
 compileBinOp :: BinOp -> Either CompileError [Directive]
-compileBinOp Plus = Right $ [Instruction $ Add "r0" "r0" "r1"]
+compileBinOp Plus = Right [Instruction $ Add "r0" "r0" "r1"]
 
 compileStatement :: SymTable -> Statement -> Either CompileError [Directive]
 compileStatement syms (Assign v ex) = do
@@ -88,6 +88,6 @@ compileStatement syms (Assign v ex) = do
 compileProgram :: Program -> Either CompileError [Directive]
 compileProgram p = do
     body' <- mapM (compileStatement syms) (body p)
-    return $ (Globl "_start"):(Label "_start"):(Label $ name p):(join body') ++
-                (map Instruction [Mov "r7" 1, Svc 0])
+    return $ Globl "_start":Label "_start":Label (name p):join body' ++
+                map Instruction [Mov "r7" 1, Svc 0]
   where syms = makeSymTable p
