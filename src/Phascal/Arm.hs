@@ -24,11 +24,15 @@ data Instr = Ldr Reg Address
            | Push [Reg]
            | Pop [Reg]
            | Add Reg Reg Reg
+           | Svc Int
+           | Mov Reg Int -- This will be more general eventually, but for now
+                         -- we just need reg := immediate.
            deriving(Show, Eq)
 data Address = RegOffset Reg Int deriving(Show, Eq)
 
 data Directive = Instruction Instr
                | Label String
+               | Globl String
                deriving(Show, Eq)
 
 
@@ -50,6 +54,8 @@ formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Add ret lhs rhs) = "add " ++ (join $ intersperse ", " [ret, lhs, rhs])
+formatInstr (Svc n) = "svc #" ++ show n
+formatInstr (Mov reg val) = "mov " ++ reg ++ ", #" ++ show val
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
@@ -57,6 +63,7 @@ formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
 formatDirective :: Directive -> String
 formatDirective (Instruction instr) = "\t" ++ formatInstr instr ++ "\n"
 formatDirective (Label lbl) = lbl ++ ":\n"
+formatDirective (Globl sym) = ".globl " ++ sym ++ "\n"
 
 compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
 compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr "r0" addr]
@@ -81,5 +88,6 @@ compileStatement syms (Assign v ex) = do
 compileProgram :: Program -> Either CompileError [Directive]
 compileProgram p = do
     body' <- mapM (compileStatement syms) (body p)
-    return $ (Label $ name p) : join body'
+    return $ (Globl "_start"):(Label "_start"):(Label $ name p):(join body') ++
+                (map Instruction [Mov "r7" 1, Svc 0])
   where syms = makeSymTable p
