@@ -18,6 +18,6 @@ main = do
                             Right progs -> Right $ mapM compileProgram progs
             case result of
                 Right (Right asm) -> mapM_ (putStr . formatDirective) (join asm)
-                -- TODO: we should send this to stdout and exit non-zero:
+                -- TODO: we should send this to stderr and exit non-zero:
                 Right (Left e) -> putStrLn ("error: " ++ show e)
                 Left e -> putStrLn ("error: " ++ show e)
