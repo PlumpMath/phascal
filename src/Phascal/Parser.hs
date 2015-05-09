@@ -167,7 +167,7 @@ tyInt  = sym "integer" TyInt
 tyBool = sym "boolean" TyBool
 
 file :: Parser [Program]
-file = spaces *> many program
+file = spaces *> many program <* eof
 
 parse :: String -> String -> Either ParseError [Program]
 parse = runParser file ()
