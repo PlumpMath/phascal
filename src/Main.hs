@@ -25,3 +25,4 @@ main = do
                 Right (Right asm) -> mapM_ (putStr . formatDirective) (join asm)
                 Right (Left e) -> hPutStrLn stderr ("error: " ++ show e)
                 Left e -> hPutStrLn stderr ("error: " ++ show e) >> exitFailure
+        _ -> hPutStrLn stderr "Usage: phascal [ asm | ast ]" >> exitFailure
