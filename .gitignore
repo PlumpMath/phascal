@@ -2,3 +2,4 @@ dist
 *.s
 *.o
 *.out
+test-scratch
