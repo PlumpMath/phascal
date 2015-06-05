@@ -24,13 +24,14 @@ getPathFor name = do
 buildAsm :: String -> String -> IO String
 buildAsm testName src = do
     path <- getPathFor testName
-    let asmpath = path </> "test.s"
-    let objpath = path </> "test.o"
-    let exepath = path </> "test"
-    writeFile asmpath src
-    callProcess "arm-none-eabi-as" ["-c", "-o", objpath, asmpath]
-    callProcess "arm-none-eabi-ld" ["-o", exepath, objpath]
-    return exepath
+    let [asm, obj, exe] = map (path </>) ["test.s", "test.o", "test"]
+    writeFile asm src
+    assemble obj asm
+    link exe obj
+    return exe
+  where
+    assemble obj src = callProcess "arm-none-eabi-as" ["-c", "-o", obj, src]
+    link exe obj = callProcess "arm-none-eabi-ld" ["-o", exe, obj]
 
 runAsm :: String -> String -> IO ExitCode
 runAsm testName src = do
