@@ -3,6 +3,7 @@ module ExecTests (execTests) where
 import Test.HUnit
 import Phascal.Arm
 import Phascal.Parser
+import Phascal.Build
 
 import System.IO
 import System.Process
@@ -29,9 +30,6 @@ buildAsm testName src = do
     assemble obj asm
     link exe obj
     return exe
-  where
-    assemble obj src = callProcess "arm-none-eabi-as" ["-c", "-o", obj, src]
-    link exe obj = callProcess "arm-none-eabi-ld" ["-o", exe, obj]
 
 runAsm :: String -> String -> IO ExitCode
 runAsm testName src = do
