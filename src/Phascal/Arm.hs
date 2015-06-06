@@ -15,7 +15,7 @@ data CompileError = UndefinedVar String
 varAddr :: SymTable -> String -> Either CompileError Address
 varAddr syms v = case lookup v syms of
     Nothing -> Left (UndefinedVar v)
-    Just (SymInfo offset _) -> Right (RegOffset "fp" offset)
+    Just (SymInfo slotnum _) -> Right (RegOffset "fp" (slotnum*4))
 
 type Reg = String
 

@@ -89,5 +89,17 @@ execTests = TestList [
             "  b := 0;",
             "  c := a",
             "end."
+         ]),
+
+    -- Make sure things are aligned properly; test with multi-byte values:
+    execTest "multi-byte-values" ExitSuccess
+        (compileText $ unlines [
+            "program multiByteValues;",
+            "var a, b :integer;",
+            "begin",
+            "  b := 0;",
+            "  a := 123456789;",
+            "  b := b",
+            "end."
          ])
     ]

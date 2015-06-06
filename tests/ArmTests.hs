@@ -33,15 +33,15 @@ instrTests = [ (Push ["r0", "r5", "lr"], "push {r0, r5, lr}")
 
 exprTests = [ (Var "x"
               , S.fromList [("x", S.SymInfo 1 TyInt)]
-              , Right [Instruction (Ldr "r0" (RegOffset "fp" 1))]
+              , Right [Instruction (Ldr "r0" (RegOffset "fp" 4))]
               )
             , ( Op Plus (Var "x") (Var "y")
               , S.fromList [ ("x", S.SymInfo 1 TyInt)
                            , ("y", S.SymInfo 2 TyInt)
                            ]
-              , Right [ Instruction (Ldr "r0" (RegOffset "fp" 1))
+              , Right [ Instruction (Ldr "r0" (RegOffset "fp" 4))
                       , Instruction (Push ["r0"])
-                      , Instruction (Ldr "r0" (RegOffset "fp" 2))
+                      , Instruction (Ldr "r0" (RegOffset "fp" 8))
                       , Instruction (Push ["r0"])
                       , Instruction (Pop ["r0", "r1"])
                       , Instruction (Add "r0" "r0" "r1")
