@@ -50,18 +50,32 @@ canImmediate n = any (\rot -> n' `rotate` rot < 256) [0,2..30]
 
 
 formatInstr :: Instr -> String
-formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
-formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
-formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
-formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
-formatInstr (Ldm base regs) = "ldm " ++ base ++ ", {" ++ join (intersperse "," regs) ++ "}"
-formatInstr (Add ret lhs rhs) = "add " ++ join (intersperse ", " [ret, lhs, rhs])
-formatInstr (Svc n) = "svc #" ++ show n
-formatInstr (MovRI reg val) = "mov " ++ reg ++ ", #" ++ show val
-formatInstr (MovRR lhs rhs) = "mov " ++ lhs ++ ", " ++ rhs
+formatInstr (Ldr reg addr) = formatApply "ldr" [reg, formatAddr addr]
+formatInstr (Str reg addr) = formatApply "str" [reg, formatAddr addr]
+formatInstr (Push regs) = formatApply "push" [formatRegList regs]
+formatInstr (Pop regs) = formatApply "pop" [formatRegList regs]
+formatInstr (Ldm base regs) = formatApply "ldm" [base, formatRegList regs]
+formatInstr (Add ret lhs rhs) = formatApply "add" [ret, lhs, rhs]
+formatInstr (Svc n) = formatApply "svc" [formatInt n]
+formatInstr (MovRI reg val) = formatApply "mov" [reg, formatInt val]
+formatInstr (MovRR lhs rhs) = formatApply "mov" [lhs, rhs]
 
 formatAddr :: Address -> String
-formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
+formatAddr (RegOffset reg off) = join ["[", commaSep [reg, formatInt off], "]"]
+
+formatInt :: Int -> String
+formatInt value = "#" ++ show value
+
+formatRegList :: [Reg] -> String
+formatRegList regs = join ["{", commaSep regs, "}"]
+
+-- | @formatApply op args@ is the string represention of pneumonic @op@
+-- applied to the (already formatted) list of arguments @args@.
+formatApply :: String -> [String] -> String
+formatApply op args = op ++ " " ++ commaSep args
+
+commaSep :: [String] -> String
+commaSep items = join (intersperse ", " items)
 
 formatDirective :: Directive -> String
 formatDirective (Instruction instr) = "\t" ++ formatInstr instr ++ "\n"

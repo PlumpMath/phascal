@@ -23,8 +23,8 @@ no = [ 0x00000102
      , 0x00100001
      ]
 
-instrTests = [ (Push ["r0", "r5", "lr"], "push {r0,r5,lr}")
-             , (Pop  ["r1", "r3"],       "pop {r1,r3}")
+instrTests = [ (Push ["r0", "r5", "lr"], "push {r0, r5, lr}")
+             , (Pop  ["r1", "r3"],       "pop {r1, r3}")
              , (Pop  ["r1"],             "pop {r1}")
              , (Add "r1" "r2" "r3",     "add r1, r2, r3")
              , (Add "r0" "r0" "r1",     "add r0, r0, r1")
