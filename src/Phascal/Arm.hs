@@ -28,6 +28,7 @@ data Instr = Ldr Reg Address
            | Svc Int
            | MovRR Reg Reg -- reg := reg
            | MovRI Reg Int -- reg := immediate
+           | Bl String
            deriving(Show, Eq)
 data Address = RegOffset Reg Int deriving(Show, Eq)
 
@@ -59,6 +60,7 @@ formatInstr (Add ret lhs rhs) = formatApply "add" [ret, lhs, rhs]
 formatInstr (Svc n) = formatApply "svc" [formatInt n]
 formatInstr (MovRI reg val) = formatApply "mov" [reg, formatInt val]
 formatInstr (MovRR lhs rhs) = formatApply "mov" [lhs, rhs]
+formatInstr (Bl label) = formatApply "bl" [label]
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = join ["[", commaSep [reg, formatInt off], "]"]
@@ -105,28 +107,33 @@ compileStatement syms (Assign v ex) = do
 compileProgram :: Program -> Either CompileError [Directive]
 compileProgram p = do
     body' <- mapM (compileStatement $ makeSymTable p) (body p)
-    return $ join [ [ Globl "_start"
-                    , Label "_start"
-                    , Label (name p)
-                    ]
-                  , map Instruction functionPrologue
+    return $ join [ entryPoint (name p)
+                  , [Label (name p)]
+                  , functionPrologue
                   , join body'
-                  , map Instruction [ MovRI "r7" 1
-                                    , Svc 0
-                                    ]
-                  -- Putting this here is a little silly; the above is an exit,
-                  -- so the function epilouge is dead code. Eventually we'll
-                  -- have different notions of function vs. program though.
-                  , map Instruction functionEpilouge
+                  , functionEpilouge
                   ]
 
 
-functionPrologue :: [Instr]
-functionPrologue = [ MovRR "ip" "sp"
-                   , Push ["fp", "ip", "lr", "pc"]
-                   ]
+functionPrologue :: [Directive]
+functionPrologue = instrs [ MovRR "ip" "sp"
+                          , Push ["fp", "ip", "lr", "pc"]
+                          ]
 
-functionEpilouge :: [Instr]
-functionEpilouge = [ Ldm "sp" ["fp", "sp", "lr"]
-                   , MovRR "pc" "lr"
-                   ]
+functionEpilouge :: [Directive]
+functionEpilouge = instrs [ Ldm "sp" ["fp", "sp", "lr"]
+                          , MovRR "pc" "lr"
+                          ]
+
+
+entryPoint :: String -> [Directive]
+entryPoint mainSym = [ Globl "_start"
+                     , Label "_start"
+                     ] ++ instrs [ MovRI "fp" 0
+                                 , Bl mainSym
+                                 , MovRI "r7" 1
+                                 , Svc 0
+                                 ]
+
+instrs :: [Instr] -> [Directive]
+instrs = map Instruction
