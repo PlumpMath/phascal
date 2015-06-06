@@ -23,10 +23,11 @@ data Instr = Ldr Reg Address
            | Str Reg Address
            | Push [Reg]
            | Pop [Reg]
+           | Ldm Reg [Reg]
            | Add Reg Reg Reg
            | Svc Int
-           | Mov Reg Int -- This will be more general eventually, but for now
-                         -- we just need reg := immediate.
+           | MovRR Reg Reg -- reg := reg
+           | MovRI Reg Int -- reg := immediate
            deriving(Show, Eq)
 data Address = RegOffset Reg Int deriving(Show, Eq)
 
@@ -53,9 +54,11 @@ formatInstr (Ldr reg addr) = "ldr " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Str reg addr) = "str " ++ reg ++ ", " ++ formatAddr addr
 formatInstr (Push regs) = "push {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Pop regs) = "pop {" ++ join (intersperse "," regs) ++ "}"
+formatInstr (Ldm base regs) = "ldm " ++ base ++ ", {" ++ join (intersperse "," regs) ++ "}"
 formatInstr (Add ret lhs rhs) = "add " ++ join (intersperse ", " [ret, lhs, rhs])
 formatInstr (Svc n) = "svc #" ++ show n
-formatInstr (Mov reg val) = "mov " ++ reg ++ ", #" ++ show val
+formatInstr (MovRI reg val) = "mov " ++ reg ++ ", #" ++ show val
+formatInstr (MovRR lhs rhs) = "mov " ++ lhs ++ ", " ++ rhs
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = "[" ++ reg ++ ",#" ++ show off ++ "]"
@@ -87,7 +90,29 @@ compileStatement syms (Assign v ex) = do
 
 compileProgram :: Program -> Either CompileError [Directive]
 compileProgram p = do
-    body' <- mapM (compileStatement syms) (body p)
-    return $ Globl "_start":Label "_start":Label (name p):join body' ++
-                map Instruction [Mov "r7" 1, Svc 0]
-  where syms = makeSymTable p
+    body' <- mapM (compileStatement $ makeSymTable p) (body p)
+    return $ join [ [ Globl "_start"
+                    , Label "_start"
+                    , Label (name p)
+                    ]
+                  , map Instruction functionPrologue
+                  , join body'
+                  , map Instruction [ MovRI "r7" 1
+                                    , Svc 0
+                                    ]
+                  -- Putting this here is a little silly; the above is an exit,
+                  -- so the function epilouge is dead code. Eventually we'll
+                  -- have different notions of function vs. program though.
+                  , map Instruction functionEpilouge
+                  ]
+
+
+functionPrologue :: [Instr]
+functionPrologue = [ MovRR "ip" "sp"
+                   , Push ["fp", "ip", "lr", "pc"]
+                   ]
+
+functionEpilouge :: [Instr]
+functionEpilouge = [ Ldm "sp" ["fp", "sp", "lr"]
+                   , MovRR "pc" "lr"
+                   ]
