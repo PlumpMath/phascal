@@ -47,6 +47,14 @@ exprTests = [ (Var "x"
                       , Instruction (Add "r0" "r0" "r1")
                       ]
               )
+            , ( Num 62 -- fits in an immediate
+              , S.empty
+              , Right [Instruction (MovRI "r0" 62)]
+              )
+            , ( Num 12345678 -- doesn't fit in an immediate
+              , S.empty
+              , Right [Instruction (Ldr "r0" (AddrContaining 12345678))]
+              )
             ]
 
 armTests = TestList $

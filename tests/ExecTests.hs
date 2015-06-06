@@ -54,5 +54,7 @@ compileText src = do
 
 execTests = TestList [
     execTest "empty-program" ExitSuccess
-        (compileText "program empty; begin end.")
+        (compileText "program empty; begin end."),
+    execTest "return 1" (ExitFailure 1)
+        (compileText "program return1; var a : integer; begin a := 1 end.")
     ]

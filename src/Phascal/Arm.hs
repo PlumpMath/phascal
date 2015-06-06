@@ -30,7 +30,10 @@ data Instr = Ldr Reg Address
            | MovRI Reg Int -- reg := immediate
            | Bl String
            deriving(Show, Eq)
-data Address = RegOffset Reg Int deriving(Show, Eq)
+data Address = RegOffset Reg Int
+             | AddrContaining Int -- =0x1242 notation, i.e. put this value in the
+                                  -- binary and refer to it by its address
+             deriving(Show, Eq)
 
 data Directive = Instruction Instr
                | Label String
@@ -64,6 +67,7 @@ formatInstr (Bl label) = formatApply "bl" [label]
 
 formatAddr :: Address -> String
 formatAddr (RegOffset reg off) = join ["[", commaSep [reg, formatInt off], "]"]
+formatAddr (AddrContaining addr) = "=" ++ show addr
 
 formatInt :: Int -> String
 formatInt value = "#" ++ show value
@@ -86,6 +90,9 @@ formatDirective (Globl sym) = ".globl " ++ sym ++ "\n"
 
 compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
 compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr "r0" addr]
+compileExpr syms (Num n) = return [Instruction $ if canImmediate n
+                                                   then MovRI "r0" n
+                                                   else Ldr "r0" (AddrContaining n)]
 compileExpr syms (Op op lhs rhs) = do
     [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
     opAsm <- compileBinOp op
