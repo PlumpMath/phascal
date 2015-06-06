@@ -111,7 +111,7 @@ compileProgram p = do
                   , [Label (name p)]
                   , functionPrologue
                   , join body'
-                  , functionEpilouge
+                  , functionEpilogue
                   ]
 
 
@@ -120,8 +120,8 @@ functionPrologue = instrs [ MovRR "ip" "sp"
                           , Push ["fp", "ip", "lr", "pc"]
                           ]
 
-functionEpilouge :: [Directive]
-functionEpilouge = instrs [ Ldm "sp" ["fp", "sp", "lr"]
+functionEpilogue :: [Directive]
+functionEpilogue = instrs [ Ldm "sp" ["fp", "sp", "lr"]
                           , MovRR "pc" "lr"
                           ]
 
