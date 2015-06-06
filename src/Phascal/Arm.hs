@@ -25,6 +25,7 @@ data Instr = Ldr Reg Address
            | Pop [Reg]
            | Ldm Reg [Reg]
            | Add Reg Reg Reg
+           | SubRRI Reg Reg Int -- reg := reg - immediate
            | Svc Int
            | MovRR Reg Reg -- reg := reg
            | MovRI Reg Int -- reg := immediate
@@ -60,6 +61,7 @@ formatInstr (Push regs) = formatApply "push" [formatRegList regs]
 formatInstr (Pop regs) = formatApply "pop" [formatRegList regs]
 formatInstr (Ldm base regs) = formatApply "ldm" [base, formatRegList regs]
 formatInstr (Add ret lhs rhs) = formatApply "add" [ret, lhs, rhs]
+formatInstr (SubRRI ret lhs rhs) = formatApply "sub" [ret, lhs, formatInt rhs]
 formatInstr (Svc n) = formatApply "svc" [formatInt n]
 formatInstr (MovRI reg val) = formatApply "mov" [reg, formatInt val]
 formatInstr (MovRR lhs rhs) = formatApply "mov" [lhs, rhs]
@@ -125,6 +127,7 @@ compileProgram p = do
 functionPrologue :: [Directive]
 functionPrologue = instrs [ MovRR "ip" "sp"
                           , Push ["fp", "ip", "lr", "pc"]
+                          , SubRRI "fp" "ip" 4
                           ]
 
 functionEpilogue :: [Directive]
