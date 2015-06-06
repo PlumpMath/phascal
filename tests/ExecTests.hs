@@ -77,5 +77,17 @@ execTests = TestList [
             "  e := 0;",
             "  f := 0",
             "end."
+         ]),
+
+    -- Make sure values propogate through assignments correctly.
+    execTest "propogate-values-assignemnt" (ExitFailure 1)
+        (compileText $ unlines [
+            "program propVars;",
+            "var a, b, c : integer;",
+            "begin",
+            "  a := 1;",
+            "  b := 0;",
+            "  c := a",
+            "end."
          ])
     ]
