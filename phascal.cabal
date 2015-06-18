@@ -37,7 +37,9 @@ test-suite the-test-suite
                        directory >= 1.2 && < 2.0,
                        unix >= 2.7 && <3.0,
                        HUnit >=1.2 && <2.0,
+                       QuickCheck >= 2.8 && <3.0,
                        test-framework >=0.8 && <1.0,
-                       test-framework-hunit >=0.3 && <1.0
+                       test-framework-hunit >=0.3 && <1.0,
+                       test-framework-quickcheck2 >=0.3 && <1.0
   hs-source-dirs:      tests, src
   default-language:    Haskell2010
