@@ -95,6 +95,8 @@ compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr
 compileExpr syms (Num n) = return [Instruction $ if canImmediate n
                                                    then MovRI "r0" n
                                                    else Ldr "r0" (AddrContaining n)]
+compileExpr _ T = return [Instruction (MovRI "r0" 1)]
+compileExpr _ F = return [Instruction (MovRI "r0" 0)]
 compileExpr syms (Op op lhs rhs) = do
     [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
     opAsm <- compileBinOp op

@@ -40,7 +40,6 @@ instance Arbitrary BinOp where
                                   , GtEq
                                   ])
 
--- Fails with expr: F (not implemented)
 ifTypeThenCode :: SymTable -> Expr -> Bool
 ifTypeThenCode syms expr = case (typeOf syms expr) of
     Left _ -> True
