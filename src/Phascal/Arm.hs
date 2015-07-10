@@ -102,6 +102,7 @@ compileExpr _ F = return [Instruction (MovRI "r0" 0)]
 compileExpr syms (Not ex) = do
     sub <- compileExpr syms ex
     return $ sub ++ [Instruction $ EorRI "r0" "r0" 1]
+compileExpr syms (Pos ex) = compileExpr syms ex
 compileExpr syms (Op op lhs rhs) = do
     [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
     opAsm <- compileBinOp op
