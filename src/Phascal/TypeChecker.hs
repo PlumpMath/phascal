@@ -62,5 +62,6 @@ operandType side op = case (side, op) of
     (_,Eq) -> TyInt
     (_,NEq) -> TyInt
     (_,Lt) -> TyInt
+    (_,LtEq) -> TyInt
     (_,Gt) -> TyInt
     (_,GtEq) -> TyInt
