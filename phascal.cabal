@@ -19,6 +19,11 @@ executable phascal
   main-is:             Main.hs
   other-modules:       Phascal.Ast,
                        Phascal.Parser
+                       Phascal.Arm
+                       Phascal.Build
+                       Phascal.SymbolTable
+                       Phascal.TypeChecker
+                       Phascal.Types
   -- other-extensions:    
   build-depends:       base >=4.8 && <5.0,
                        parsec >=3.1 && <4.0,
