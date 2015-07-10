@@ -25,6 +25,7 @@ data Instr = Ldr Reg Address
            | Pop [Reg]
            | Ldm Reg [Reg]
            | Add Reg Reg Reg
+           | OrR Reg Reg Reg
            | SubRRR Reg Reg Reg
            | SubRRI Reg Reg Int -- reg := reg - immediate
            | Svc Int
@@ -63,6 +64,7 @@ formatInstr (Push regs) = formatApply "push" [formatRegList regs]
 formatInstr (Pop regs) = formatApply "pop" [formatRegList regs]
 formatInstr (Ldm base regs) = formatApply "ldm" [base, formatRegList regs]
 formatInstr (Add ret lhs rhs) = formatApply "add" [ret, lhs, rhs]
+formatInstr (OrR ret lhs rhs) = formatApply "orr" [ret, lhs, rhs]
 formatInstr (SubRRR rd rm rs) = formatApply "sub" [rd, rm, rs]
 formatInstr (SubRRI ret lhs rhs) = formatApply "sub" [ret, lhs, formatInt rhs]
 formatInstr (Svc n) = formatApply "svc" [formatInt n]
@@ -121,6 +123,7 @@ compileExpr syms (Op op lhs rhs) = do
 
 compileBinOp :: BinOp -> Either CompileError [Directive]
 compileBinOp Plus = Right [Instruction $ Add "r0" "r0" "r1"]
+compileBinOp Or = Right [Instruction $ OrR "r0" "r0" "r1"]
 
 compileStatement :: SymTable -> Statement -> Either CompileError [Directive]
 compileStatement syms (Assign v ex) = do
