@@ -25,6 +25,7 @@ data Instr = Ldr Reg Address
            | Pop [Reg]
            | Ldm Reg [Reg]
            | Add Reg Reg Reg
+           | SubRRR Reg Reg Reg
            | SubRRI Reg Reg Int -- reg := reg - immediate
            | Svc Int
            | EorRI Reg Reg Int
@@ -62,6 +63,7 @@ formatInstr (Push regs) = formatApply "push" [formatRegList regs]
 formatInstr (Pop regs) = formatApply "pop" [formatRegList regs]
 formatInstr (Ldm base regs) = formatApply "ldm" [base, formatRegList regs]
 formatInstr (Add ret lhs rhs) = formatApply "add" [ret, lhs, rhs]
+formatInstr (SubRRR rd rm rs) = formatApply "sub" [rd, rm, rs]
 formatInstr (SubRRI ret lhs rhs) = formatApply "sub" [ret, lhs, formatInt rhs]
 formatInstr (Svc n) = formatApply "svc" [formatInt n]
 formatInstr (EorRI rd rs int) = formatApply "eor" [rd, rs, formatInt int]
@@ -103,6 +105,11 @@ compileExpr syms (Not ex) = do
     sub <- compileExpr syms ex
     return $ sub ++ [Instruction $ EorRI "r0" "r0" 1]
 compileExpr syms (Pos ex) = compileExpr syms ex
+compileExpr syms (Neg ex) = do
+    sub <- compileExpr syms ex
+    return $ sub ++ (map Instruction [ MovRI "r1" 0
+                                     , SubRRR "r0" "r1" "r0"
+                                     ]) 
 compileExpr syms (Op op lhs rhs) = do
     [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
     opAsm <- compileBinOp op
