@@ -5,6 +5,7 @@ import Data.Bits
 import Data.Word
 import Prelude hiding (lookup)
 import Data.List (intersperse)
+import Data.Maybe (fromJust)
 
 import Phascal.Ast
 import Phascal.SymbolTable
@@ -12,10 +13,9 @@ import Phascal.SymbolTable
 data CompileError = UndefinedVar String
                   deriving(Show, Eq)
 
-varAddr :: SymTable -> String -> Either CompileError Address
-varAddr syms v = case lookup v syms of
-    Nothing -> Left (UndefinedVar v)
-    Just (SymInfo slotnum _) -> Right (RegOffset "fp" (slotnum*4))
+varAddr :: SymTable -> String -> Address
+varAddr syms v = RegOffset "fp" (slotnum * 4)
+    where slotnum = frameOffset $ fromJust (lookup v syms)
 
 type Reg = String
 
@@ -96,50 +96,47 @@ formatDirective (Instruction instr) = "\t" ++ formatInstr instr ++ "\n"
 formatDirective (Label lbl) = lbl ++ ":\n"
 formatDirective (Globl sym) = ".globl " ++ sym ++ "\n"
 
-compileExpr :: SymTable -> Expr -> Either CompileError [Directive]
-compileExpr syms (Var v) = varAddr syms v >>= \addr -> return [Instruction $ Ldr "r0" addr]
-compileExpr syms (Num n) = return [Instruction $ if canImmediate n
-                                                   then MovRI "r0" n
-                                                   else Ldr "r0" (AddrContaining n)]
-compileExpr _ T = return [Instruction (MovRI "r0" 1)]
-compileExpr _ F = return [Instruction (MovRI "r0" 0)]
-compileExpr syms (Not ex) = do
-    sub <- compileExpr syms ex
-    return $ sub ++ [Instruction $ EorRI "r0" "r0" 1]
+compileExpr :: SymTable -> Expr -> [Directive]
+compileExpr syms (Var v) = [Instruction $ Ldr "r0" (varAddr syms v)]
+compileExpr syms (Num n) = [Instruction $ if canImmediate n
+                                           then MovRI "r0" n
+                                           else Ldr "r0" (AddrContaining n)]
+compileExpr _ T = [Instruction (MovRI "r0" 1)]
+compileExpr _ F = [Instruction (MovRI "r0" 0)]
+compileExpr syms (Not ex) =
+    (compileExpr syms ex) ++ [Instruction $ EorRI "r0" "r0" 1]
 compileExpr syms (Pos ex) = compileExpr syms ex
-compileExpr syms (Neg ex) = do
-    sub <- compileExpr syms ex
-    return $ sub ++ (map Instruction [ MovRI "r1" 0
-                                     , SubRRR "r0" "r1" "r0"
-                                     ]) 
-compileExpr syms (Op op lhs rhs) = do
-    [lAsm, rAsm] <- mapM compileSubExpr [lhs, rhs]
-    opAsm <- compileBinOp op
-    return $ lAsm ++ rAsm ++ [Instruction $ Pop ["r0", "r1"]] ++ opAsm
+compileExpr syms (Neg ex) =
+    (compileExpr syms ex) ++ (map Instruction [ MovRI "r1" 0
+                                              , SubRRR "r0" "r1" "r0"
+                                              ])
+compileExpr syms (Op op lhs rhs) =
+    let
+        [lAsm, rAsm] = mapM compileSubExpr [lhs, rhs]
+        opAsm = compileBinOp op
+    in
+        lAsm ++ rAsm ++ [Instruction $ Pop ["r0", "r1"]] ++ opAsm
   where
-    compileSubExpr ex = do
-        sub <- compileExpr syms ex
-        return $ sub ++ [Instruction $ Push ["r0"]]
+    compileSubExpr ex = (compileExpr syms ex) ++ [Instruction $ Push ["r0"]]
 
-compileBinOp :: BinOp -> Either CompileError [Directive]
-compileBinOp Plus = Right [Instruction $ Add "r0" "r0" "r1"]
-compileBinOp Or = Right [Instruction $ OrR "r0" "r0" "r1"]
+compileBinOp :: BinOp -> [Directive]
+compileBinOp Plus = [Instruction $ Add "r0" "r0" "r1"]
+compileBinOp Or = [Instruction $ OrR "r0" "r0" "r1"]
 
-compileStatement :: SymTable -> Statement -> Either CompileError [Directive]
+compileStatement :: SymTable -> Statement -> [Directive]
 compileStatement syms (Assign v ex) = do
-    addr <- varAddr syms v
-    liftM2 (++) (compileExpr syms ex)
-                (return [Instruction $ Str "r0" addr])
+    let addr = varAddr syms v in
+        (compileExpr syms ex) ++ [Instruction $ Str "r0" addr]
 
-compileProgram :: Program -> Either CompileError [Directive]
-compileProgram p = do
-    body' <- mapM (compileStatement $ makeSymTable p) (body p)
-    return $ join [ entryPoint (name p)
-                  , [Label (name p)]
-                  , functionPrologue
-                  , join body'
-                  , functionEpilogue
-                  ]
+compileProgram :: Program -> [Directive]
+compileProgram p =
+    let body' = map (compileStatement $ makeSymTable p) (body p) in
+        join [ entryPoint (name p)
+             , [Label (name p)]
+             , functionPrologue
+             , join body'
+             , functionEpilogue
+             ]
 
 
 functionPrologue :: [Directive]
