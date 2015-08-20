@@ -47,7 +47,7 @@ compileText :: String -> String
 compileText src = do
     let
         (Right [ast]) = parse "<test-program>" src
-        (Right directives) = compileProgram ast
+        directives = compileProgram ast
       in
         join (map formatDirective directives)
 

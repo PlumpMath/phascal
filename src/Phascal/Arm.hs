@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 module Phascal.Arm where
 
 import Control.Monad (liftM, liftM2, join)
@@ -6,6 +7,9 @@ import Data.Word
 import Prelude hiding (lookup)
 import Data.List (intersperse)
 import Data.Maybe (fromJust)
+
+import GHC.Generics
+import Control.DeepSeq
 
 import Phascal.Ast
 import Phascal.SymbolTable
@@ -33,16 +37,21 @@ data Instr = Ldr Reg Address
            | MovRR Reg Reg -- reg := reg
            | MovRI Reg Int -- reg := immediate
            | Bl String
-           deriving(Show, Eq)
+           deriving(Show, Eq, Generic)
+
 data Address = RegOffset Reg Int
              | AddrContaining Int -- =0x1242 notation, i.e. put this value in the
                                   -- binary and refer to it by its address
-             deriving(Show, Eq)
+             deriving(Show, Eq, Generic)
 
 data Directive = Instruction Instr
                | Label String
                | Globl String
-               deriving(Show, Eq)
+               deriving(Show, Eq, Generic)
+
+instance NFData Instr
+instance NFData Address
+instance NFData Directive
 
 
 -- | @canImmediate n@ indicates whether the number @n@ is representable as
@@ -112,7 +121,7 @@ compileExpr syms (Neg ex) =
                                               ])
 compileExpr syms (Op op lhs rhs) =
     let
-        [lAsm, rAsm] = mapM compileSubExpr [lhs, rhs]
+        [lAsm, rAsm] = map compileSubExpr [lhs, rhs]
         opAsm = compileBinOp op
     in
         lAsm ++ rAsm ++ [Instruction $ Pop ["r0", "r1"]] ++ opAsm

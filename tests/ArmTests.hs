@@ -33,27 +33,27 @@ instrTests = [ (Push ["r0", "r5", "lr"], "push {r0, r5, lr}")
 
 exprTests = [ (Var "x"
               , S.fromList [("x", S.SymInfo 1 TyInt)]
-              , Right [Instruction (Ldr "r0" (RegOffset "fp" 4))]
+              , [Instruction (Ldr "r0" (RegOffset "fp" 4))]
               )
             , ( Op Plus (Var "x") (Var "y")
               , S.fromList [ ("x", S.SymInfo 1 TyInt)
                            , ("y", S.SymInfo 2 TyInt)
                            ]
-              , Right [ Instruction (Ldr "r0" (RegOffset "fp" 4))
-                      , Instruction (Push ["r0"])
-                      , Instruction (Ldr "r0" (RegOffset "fp" 8))
-                      , Instruction (Push ["r0"])
-                      , Instruction (Pop ["r0", "r1"])
-                      , Instruction (Add "r0" "r0" "r1")
-                      ]
+              , [ Instruction (Ldr "r0" (RegOffset "fp" 4))
+                , Instruction (Push ["r0"])
+                , Instruction (Ldr "r0" (RegOffset "fp" 8))
+                , Instruction (Push ["r0"])
+                , Instruction (Pop ["r0", "r1"])
+                , Instruction (Add "r0" "r0" "r1")
+                ]
               )
             , ( Num 62 -- fits in an immediate
               , S.empty
-              , Right [Instruction (MovRI "r0" 62)]
+              , [Instruction (MovRI "r0" 62)]
               )
             , ( Num 12345678 -- doesn't fit in an immediate
               , S.empty
-              , Right [Instruction (Ldr "r0" (AddrContaining 12345678))]
+              , [Instruction (Ldr "r0" (AddrContaining 12345678))]
               )
             ]
 

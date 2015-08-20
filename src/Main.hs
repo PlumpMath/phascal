@@ -20,9 +20,11 @@ main = do
         ["asm"] -> do
             let result = case parse "<stdin>" contents of
                             Left e -> Left e
+                            -- TODO: We *need* to typecheck before we invoke
+                            -- compileProgram. This could invoke error
+                            -- otherwise.
                             Right progs -> Right $ mapM compileProgram progs
             case result of
-                Right (Right asm) -> mapM_ (putStr . formatDirective) (join asm)
-                Right (Left e) -> hPutStrLn stderr ("error: " ++ show e)
+                Right asm -> mapM_ (putStr . formatDirective) (join asm)
                 Left e -> hPutStrLn stderr ("error: " ++ show e) >> exitFailure
         _ -> hPutStrLn stderr "Usage: phascal [ asm | ast ]" >> exitFailure

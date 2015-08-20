@@ -8,6 +8,8 @@ import Phascal.SymbolTable (SymTable, empty)
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen
 
+import Control.DeepSeq
+
 instance Arbitrary Expr where
     arbitrary = oneof [ Num <$> arbitrary
 --                      , Var <$> arbitrary -- Random variable names are
@@ -40,9 +42,15 @@ instance Arbitrary BinOp where
                                   , GtEq
                                   ])
 
+-- | @ifTypeThenCode syms expr@ returns @True@ if:
+--
+-- * @expr@ does not pass the type checker, or
+-- * @compileExpr syms expr@ successfully generates code.
+--
+-- Note that the type of @compileExpr@ looks like it guarantees this, but there
+-- are cases which invoke @error@, which should only occur if the @expr@ is
+-- ill-typed.
 ifTypeThenCode :: SymTable -> Expr -> Bool
 ifTypeThenCode syms expr = case (typeOf syms expr) of
     Left _ -> True
-    Right _ -> case (compileExpr syms expr) of
-        Left _ -> False
-        Right _ -> True
+    Right _ -> compileExpr syms expr `deepseq` True
