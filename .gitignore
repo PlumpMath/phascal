@@ -3,3 +3,5 @@ dist
 *.o
 *.out
 test-scratch
+/.cabal-sandbox
+/cabal.sandbox.config
