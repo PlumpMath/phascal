@@ -4,7 +4,7 @@ import ParserTests
 import ArmTests
 import TypeTests
 import ExecTests
-import CodegenTypeTests
+import CodegenTests
 
 import Test.Framework
 import Test.Framework.Providers.HUnit
@@ -15,6 +15,6 @@ main = defaultMain [ testGroup "Parser tests" $ hUnitTestToTests parserTests
                    , testGroup "Arm tests"    $ hUnitTestToTests    armTests
                    , testGroup "Type tests"   $ hUnitTestToTests   typeTests
                    , testGroup "Exec Tests"   $ hUnitTestToTests   execTests
-
                    , testProperty "If typechecks then generates code" ifTypeThenCode
+                   , testProperty "Binop produces correct results"        binopsWork
                    ]
